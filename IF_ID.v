@@ -1,0 +1,20 @@
+`timescale 1ns / 1ps
+
+module IF_ID #(parameter WIDTH=32)(
+input wire clk,
+input wire rst,
+input wire stall,
+input wire [WIDTH-1:0] inc_pc,inst,
+output reg [WIDTH-1:0] id_inc_pc, id_inst
+    );
+    
+always@(posedge clk) begin
+if(rst) begin
+id_inc_pc <= 32'b0;
+id_inst <=32'b0;
+end else if (!stall) begin 
+id_inc_pc <=inc_pc;
+id_inst <= inst;
+end
+end
+endmodule
