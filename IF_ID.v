@@ -12,9 +12,15 @@ always@(posedge clk) begin
 if(rst) begin
 id_inc_pc <= 32'b0;
 id_inst <=32'b0;
-end else if (!stall) begin 
+end else  begin 
+if (!stall) begin 
 id_inc_pc <=inc_pc;
 id_inst <= inst;
+end
+else begin
+id_inc_pc <=id_inc_pc;
+id_inst <=id_inst;
+end
 end
 end
 endmodule

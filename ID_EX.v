@@ -4,8 +4,14 @@ module ID_EX(
 input wire clk,
 input wire rst,
 input wire stall,
+input wire regwrite, aluSrc, memread, memwrite, memtoreg, branch,
+input wire [2:0] alu_signal,
+input wire [4:0] id_rd,
 input wire [31:0] id_inc_pc, rs1_data, rs2_data, imm,
-output reg [31:0] ex_inc_pc, ex_rs1_data, ex_rs2_data,ex_imm
+output reg [31:0] ex_inc_pc, ex_rs1_data, ex_rs2_data,ex_imm,
+output reg ex_regwrite, ex_aluSrc, ex_memread, ex_memwrite, ex_memtoreg, ex_branch, 
+output reg [2:0] ex_alu_signal,
+output reg [4:0] ex_rd
     );
     
 always@(posedge clk) begin
@@ -14,12 +20,36 @@ ex_inc_pc <=32'b0;
  ex_rs1_data <=32'b0;
   ex_rs2_data <=32'b0;
    ex_imm <=32'b0;
-end else if (!stall) begin
+   ex_regwrite <=1'b0;
+    ex_aluSrc <=1'b0;
+     ex_memread <=1'b0;
+      ex_memwrite <=1'b0; ex_memtoreg <=1'b0;
+      ex_branch <=1'b0; 
+      ex_alu_signal <=3'b0;
+      ex_rd <=5'b0;
+end else begin 
+if (!stall) begin
 ex_inc_pc <=id_inc_pc;
 ex_rs1_data <=rs1_data;
 ex_rs2_data <= rs2_data;
 ex_imm <=imm;
-end
+ex_rd <= id_rd;
+ end
+if(stall) begin // stall thì set về 0 hết, 
+ex_regwrite <=1'b0;
+ex_aluSrc <=1'b0;
+ex_memread <=1'b0;
+ex_memwrite <=1'b0;
+ex_memtoreg <=1'b0;
+ex_branch <=1'b0;
+ex_alu_signal <=1'b0;
+end else begin
+   ex_regwrite <=regwrite;
+    ex_aluSrc <=aluSrc;
+     ex_memread <=memread;
+      ex_memwrite <=memwrite; ex_memtoreg <=memtoreg;
+      ex_branch <=branch; ex_alu_signal <=alu_signal;
 end    
-    
+ end
+ end   
 endmodule
