@@ -2,7 +2,7 @@
 module EX_MEM(
 input wire clk,
 input wire rst,
-input wire stall,
+
 input wire is_zero,
 input wire ex_regwrite, ex_memread, ex_memwrite,ex_memtoreg, ex_branch,
 input wire [4:0] ex_rd,
@@ -26,26 +26,16 @@ mem_memtoreg <=1'b0;
 mem_branch <=1'b0;
 mem_rd <=5'b0;
 end else begin
- if (!stall) begin
 mem_pc_branch <=pc_branch;
 mem_alu_result <=alu_result;
 mem_rs2_data <=ex_rs2_data;
-mem_is_zero <= is_zero;
-mem_rd <=ex_rd;
-end 
-if (stall) begin
-mem_regwrite <=1'b0;
-mem_memread <=1'b0;
-mem_memwrite <=1'b0;
-mem_memtoreg <=1'b0;
-mem_branch <=1'b0;
-end else begin
+mem_is_zero<=is_zero;
 mem_regwrite <=ex_regwrite;
 mem_memread <=ex_memread;
 mem_memwrite <=ex_memwrite;
 mem_memtoreg <=ex_memtoreg;
 mem_branch <=ex_branch;
-end
-end
+mem_rd <=ex_rd;
+ end
 end     
 endmodule

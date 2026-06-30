@@ -3,7 +3,6 @@
 module MEM_WB(
 input wire clk,
 input wire rst,
-input wire stall,
 input wire [4:0] mem_rd,
 input wire mem_regwrite, mem_memtoreg,
 input wire [31:0] read_data, mem_alu_result,
@@ -20,18 +19,11 @@ output reg [4:0] wb_rd
    wb_memtoreg <=1'b0;
    wb_rd <=5'b0;
     end else begin
-     if (!stall) begin
-    wb_read_data <=read_data;
-    wb_alu_result <=mem_alu_result;
-    wb_rd <= mem_rd;
-    end if(stall) begin
-    wb_regwrite <=1'b0;
-    wb_memtoreg <=1'b0;
-     end 
-    else begin
-    wb_regwrite <=mem_regwrite;
-    wb_memtoreg <=mem_memtoreg;
-    end
+   wb_read_data <= read_data;
+   wb_alu_result <= mem_alu_result;
+   wb_regwrite <=mem_regwrite;
+   wb_memtoreg <=mem_memtoreg;
+   wb_rd <=mem_rd;
     end
     end
 endmodule

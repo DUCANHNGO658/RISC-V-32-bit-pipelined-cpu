@@ -6,12 +6,12 @@ input wire rst,
 input wire stall,
 input wire regwrite, aluSrc, memread, memwrite, memtoreg, branch,
 input wire [2:0] alu_signal,
-input wire [4:0] id_rd,
+input wire [4:0] id_rd,id_rs1_addr, id_rs2_addr,
 input wire [31:0] id_inc_pc, rs1_data, rs2_data, imm,
 output reg [31:0] ex_inc_pc, ex_rs1_data, ex_rs2_data,ex_imm,
 output reg ex_regwrite, ex_aluSrc, ex_memread, ex_memwrite, ex_memtoreg, ex_branch, 
 output reg [2:0] ex_alu_signal,
-output reg [4:0] ex_rd
+output reg [4:0] ex_rd,ex_rs1_addr,ex_rs2_addr
     );
     
 always@(posedge clk) begin
@@ -27,6 +27,8 @@ ex_inc_pc <=32'b0;
       ex_branch <=1'b0; 
       ex_alu_signal <=3'b0;
       ex_rd <=5'b0;
+      ex_rs1_addr <=5'b0;
+      ex_rs2_addr <=5'b0;
 end else begin 
 if (!stall) begin
 ex_inc_pc <=id_inc_pc;
@@ -34,6 +36,8 @@ ex_rs1_data <=rs1_data;
 ex_rs2_data <= rs2_data;
 ex_imm <=imm;
 ex_rd <= id_rd;
+ex_rs1_addr <=id_rs1_addr;
+ex_rs2_addr <=id_rs2_addr;
  end
 if(stall) begin // stall thì set về 0 hết, 
 ex_regwrite <=1'b0;
