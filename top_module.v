@@ -21,8 +21,6 @@ output wire [WIDTH-1: 0] cur_pc
  wire jump;
  wire [1:0] aluop;
  
- 
- wire [WIDTH-1:0] write_data;
  wire [WIDTH-1:0] rs1_data;
  wire [WIDTH-1:0] rs2_data;
 
@@ -44,7 +42,7 @@ output wire [WIDTH-1: 0] cur_pc
  wire [WIDTH-1:0] ex_inc_pc,ex_rs1_data, ex_rs2_data, ex_imm;
  wire ex_regwrite, ex_aluSrc, ex_memread, ex_memwrite, ex_memtoreg, ex_branch; 
  wire [2:0] ex_alu_signal;
- wire [4:0] ex_rd;
+ wire [4:0] ex_rd, ex_rs1_addr, ex_rs2_addr;
  
  wire [WIDTH-1:0] mem_pc_branch, mem_alu_result, mem_rs2_data;
  wire mem_is_zero, mem_regwrite, mem_memread, mem_memwrite, mem_memtoreg, mem_branch;
@@ -54,6 +52,10 @@ output wire [WIDTH-1: 0] cur_pc
  wire [4:0] wb_rd;
  wire wb_regwrite, wb_memtoreg;
  
+ wire [1:0] forwardA,forwardB;
+ wire [31:0] inA,inB, in_final;
+ 
+ assign pc_write = !stall;
  //program counter
  program_counter pc (
  .clk(clk),
@@ -108,14 +110,34 @@ reg_file register_file (
 );
 
 //immediate sign extension
-assign imm = {{20{id_inst[31]}},id_inst[31:20]};
-assign pc_branch = ex_inc_pc + (ex_imm<<2);
+imm_comb imm_c (
+.id_inst(id_inst),
+.imm_out(imm)
+);
+assign pc_branch = ex_inc_pc + ex_imm; //đã chèn 1 bit 0 ở cuối để khỏi phải shift left 2 
 
 //ALU mux
 Mux alu_mux (
 .in1(ex_imm),
-.in2(ex_rs2_data),
+.in2(inB),
 .sel(ex_aluSrc),
+.out(in_final)
+);
+
+//ALU mux inA
+mux_3to1 muxa (
+.sel(forwardA),
+.ex_rs_data(ex_rs1_data),
+.mem_alu_result(mem_alu_result),
+.write_reg(write_reg),
+.out(inA)
+);
+
+mux_3to1 muxb (
+.sel(forwardB),
+.ex_rs_data(ex_rs2_data),
+.mem_alu_result(mem_alu_result),
+.write_reg(write_reg),
 .out(inB)
 );
 
@@ -127,11 +149,12 @@ alu_control alu_con(
 .alu_signal(alu_signal)
 );
 
+
 //ALU
 ALU alu (
-.inA(ex_rs1_data),
-.inB(inB),
-.alu_control(alu_signal),
+.inA(inA),
+.inB(in_final),
+.alu_control(ex_alu_signal),
 .is_zero(is_zero),
 .overflow(overflow),
 .alu_result(alu_result)
@@ -144,8 +167,8 @@ data_memory data_mem(
 .addr(mem_alu_result),
 .memread(mem_memread),
 .memwrite(mem_memwrite),
-.write_data(mem_rs2_data),
-.read_data(mem_data)
+.data_write(mem_rs2_data),
+.data_read(mem_data)
 );
 
 //Data mem mux
@@ -162,6 +185,7 @@ IF_ID if_id (
 .rst(rst),
 .stall(stall),
 .inc_pc(inc_pc),
+.inst(inst),
 .id_inc_pc(id_inc_pc),
 .id_inst(id_inst)
 );
@@ -183,6 +207,8 @@ ID_EX id_ex(
 .branch(branch),
 .alu_signal(alu_signal),
 .id_rd(id_rd),
+.id_rs1_addr(id_inst[19:15]),
+.id_rs2_addr(id_inst[24:20]),
 .ex_inc_pc(ex_inc_pc),
 .ex_rs1_data(ex_rs1_data),
 .ex_rs2_data(ex_rs2_data),
@@ -194,7 +220,9 @@ ID_EX id_ex(
 .ex_memtoreg(ex_memtoreg),
 .ex_branch(ex_branch),
 .ex_alu_signal(ex_alu_signal),
-.ex_rd(ex_rd) //update lại rd
+.ex_rd(ex_rd),
+.ex_rs1_addr(ex_rs1_addr),
+.ex_rs2_addr(ex_rs2_addr) //update lại rd,rs1,rs2 address
 );
 
 
@@ -202,11 +230,10 @@ ID_EX id_ex(
 EX_MEM ex_mem (
 .clk(clk),
 .rst(rst),
-.stall(stall),
 .pc_branch(pc_branch),
 .is_zero(is_zero),
 .alu_result(alu_result),
-.ex_rs2_data(ex_rs2_data),
+.ex_rs2_data(inB), //fix dữ liệu sau forwarding
 .ex_regwrite(ex_regwrite),
 .ex_memread(ex_memread),
 .ex_memwrite(ex_memwrite),
@@ -230,7 +257,6 @@ EX_MEM ex_mem (
 MEM_WB mem_wb (
 .clk(clk),
 .rst(rst),
-.stall(stall),
 .read_data(mem_data),
 .mem_alu_result(mem_alu_result),
 .mem_regwrite(mem_regwrite),
@@ -241,5 +267,26 @@ MEM_WB mem_wb (
 .wb_regwrite(wb_regwrite),
 .wb_memtoreg(wb_memtoreg),
 .wb_rd(wb_rd) //update rd
+);
+
+//hazard detect unit
+hazard_detect haz_det (
+.rs1_addr(id_inst[19:15]),
+.rs2_addr(id_inst[24:20]),
+.ex_memread(ex_memread),
+.ex_rd(ex_rd),
+.stall(stall)
+);
+
+//forwarding unit
+forwarding forw(
+.ex_rs1(ex_rs1_addr),
+.ex_rs2(ex_rs2_addr),
+.mem_regwrite(mem_regwrite),
+.wb_regwrite(wb_regwrite),
+.wb_rd(wb_rd),
+.mem_rd(mem_rd),
+.forwardA(forwardA),
+.forwardB(forwardB)
 );
 endmodule

@@ -6,6 +6,6 @@ output wire [INST_WIDTH-1:0] inst
 reg [31:0] mem_arr [0:1023]    ;
 assign inst = mem_arr[addr>>2];  //address dạng byte, chia /4 để chuyển về địa chỉ word 
 initial begin
-$readmemh("program.hex",mem_arr);
+$readmemh("program.mem",mem_arr);
 end
 endmodule
