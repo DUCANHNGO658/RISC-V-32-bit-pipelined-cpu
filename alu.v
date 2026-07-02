@@ -6,11 +6,11 @@ input wire [31:0] inB,
 input wire [2:0] alu_control,
 output wire is_zero,
 output wire overflow,
-output reg [32:0] alu_result
+output reg [31:0] alu_result
     );
 always@(*) begin
 case(alu_control)
-3'd0: alu_result = inA + inB;// support add, addi, lw, sw
+3'd0: alu_result = inA + inB;// add, addi, lw, sw
 3'd1: alu_result = inA - inB; //sub, beq, bne
 3'd2: alu_result = inA & inB; //and, andi
 3'd3: alu_result =inA | inB; //or, ori

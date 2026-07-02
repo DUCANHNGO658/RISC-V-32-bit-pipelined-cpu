@@ -31,7 +31,7 @@ end
 7'b0000011: alu_signal = 3'd0; //lw  
 7'b0100011: alu_signal = 3'd0; //S type sw
 7'b1100011: alu_signal = 3'd1; // B type beq, bne
-7'b1101111: alu_signal = 3'd0; // J type để tạm xử lý sau
+7'b1101111: alu_signal = 3'd0; // J type jal, no need alu
 default: alu_signal = 3'd0;
 endcase
 end    

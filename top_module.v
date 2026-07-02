@@ -3,11 +3,11 @@
 module top_module #(parameter WIDTH = 32)(
 input wire clk,
 input wire rst,
-input wire [WIDTH-1:0] next_pc,
 output wire [WIDTH-1: 0] cur_pc
     );
+    
  wire pc_write;
- wire [WIDTH-1:0] inc_pc; // pc + 4
+ wire [WIDTH-1:0] inc_pc, next_pc; // pc + 4
  wire [WIDTH-1:0] pc_branch;
  wire pc_sel;
  wire [WIDTH-1:0] inst;
@@ -16,16 +16,15 @@ output wire [WIDTH-1: 0] cur_pc
  wire aluSrc;
  wire memread;
  wire memwrite;
- wire memtoreg;
+ wire [1:0] memtoreg;
  wire branch;
  wire jump;
- wire [1:0] aluop;
+
  
  wire [WIDTH-1:0] rs1_data;
  wire [WIDTH-1:0] rs2_data;
 
  wire [WIDTH-1:0] imm;
- wire [WIDTH-1:0] inB;
  
  wire [2:0] alu_signal;
  wire is_zero;
@@ -40,21 +39,27 @@ output wire [WIDTH-1: 0] cur_pc
  wire [4:0] id_rd;
  
  wire [WIDTH-1:0] ex_inc_pc,ex_rs1_data, ex_rs2_data, ex_imm;
- wire ex_regwrite, ex_aluSrc, ex_memread, ex_memwrite, ex_memtoreg, ex_branch; 
+ wire ex_regwrite, ex_aluSrc, ex_memread, ex_memwrite, ex_branch; 
+ wire [1:0] ex_memtoreg;
  wire [2:0] ex_alu_signal;
  wire [4:0] ex_rd, ex_rs1_addr, ex_rs2_addr;
  
- wire [WIDTH-1:0] mem_pc_branch, mem_alu_result, mem_rs2_data;
- wire mem_is_zero, mem_regwrite, mem_memread, mem_memwrite, mem_memtoreg, mem_branch;
+ wire [WIDTH-1:0] mem_pc_branch, mem_alu_result, mem_rs2_data, mem_inc_pc;
+ wire mem_is_zero, mem_regwrite, mem_memread, mem_memwrite, mem_branch;
+ wire [1:0] mem_memtoreg;
  wire [4:0] mem_rd;
  
- wire [31:0] wb_alu_result, wb_read_data;
+ wire [31:0] wb_alu_result, wb_read_data, wb_inc_pc;
  wire [4:0] wb_rd;
- wire wb_regwrite, wb_memtoreg;
+ wire wb_regwrite;
+ wire [1:0] wb_memtoreg;
  
  wire [1:0] forwardA,forwardB;
- wire [31:0] inA,inB, in_final;
+ wire [31:0] inA,inb, in_final;
  
+ wire [31:0] id_pc_jump;
+ 
+ assign id_pc_jump = (id_inc_pc-32'd4) +imm;
  assign pc_write = !stall;
  //program counter
  program_counter pc (
@@ -67,13 +72,15 @@ output wire [WIDTH-1: 0] cur_pc
  
  assign inc_pc = cur_pc +4;   
  assign pc_sel = mem_branch & mem_is_zero;
- // pc mux
- Mux pc_mux (
- .in1(mem_pc_branch),
- .in2(inc_pc),
- .sel(pc_sel),
- .out(next_pc)
- );
+// // pc mux
+// Mux pc_mux (
+// .in1(mem_pc_branch),
+// .in2(inc_pc),
+// .sel(pc_sel),
+// .out(next_pc)
+// );
+
+assign next_pc = pc_sel ? mem_pc_branch : jump ? id_pc_jump : inc_pc;
  
 //instruction memory
 inst_mem ins_m(
@@ -90,8 +97,7 @@ control_unit cont(
 .memwrite(memwrite),
 .memtoreg(memtoreg),
 .branch(branch),
-.jump(jump),
-.aluop(aluop)
+.jump(jump)
 );
 
 assign id_rd = id_inst[11:7];
@@ -119,7 +125,7 @@ assign pc_branch = ex_inc_pc + ex_imm; //đã chèn 1 bit 0 ở cuối để kh�
 //ALU mux
 Mux alu_mux (
 .in1(ex_imm),
-.in2(inB),
+.in2(inb),
 .sel(ex_aluSrc),
 .out(in_final)
 );
@@ -138,7 +144,7 @@ mux_3to1 muxb (
 .ex_rs_data(ex_rs2_data),
 .mem_alu_result(mem_alu_result),
 .write_reg(write_reg),
-.out(inB)
+.out(inb)
 );
 
 //ALU control
@@ -171,19 +177,23 @@ data_memory data_mem(
 .data_read(mem_data)
 );
 
-//Data mem mux
-Mux data_mem_mux (
-.in1(wb_read_data),
-.in2(wb_alu_result),
-.sel(wb_memtoreg),
-.out(write_reg)
-);
+////Data mem mux
+//Mux data_mem_mux (
+//.in1(wb_read_data),
+//.in2(wb_alu_result),
+//.sel(wb_memtoreg),
+//.out(write_reg)
+//);
+
+assign write_reg = (wb_memtoreg == 2'b10) ? wb_inc_pc : //jal, ghi PC+4
+(wb_memtoreg == 2'b01) ?  wb_read_data : wb_alu_result;
 
 //IF/ID reg
 IF_ID if_id (
 .clk(clk),
 .rst(rst),
 .stall(stall),
+.jump(jump),
 .inc_pc(inc_pc),
 .inst(inst),
 .id_inc_pc(id_inc_pc),
@@ -233,7 +243,8 @@ EX_MEM ex_mem (
 .pc_branch(pc_branch),
 .is_zero(is_zero),
 .alu_result(alu_result),
-.ex_rs2_data(inB), //fix dữ liệu sau forwarding
+.ex_rs2_data(inb), //fix dữ liệu sau forwarding
+.ex_inc_pc(ex_inc_pc),
 .ex_regwrite(ex_regwrite),
 .ex_memread(ex_memread),
 .ex_memwrite(ex_memwrite),
@@ -243,6 +254,7 @@ EX_MEM ex_mem (
 .mem_pc_branch(mem_pc_branch),
 .mem_alu_result(mem_alu_result),
 .mem_rs2_data(mem_rs2_data),
+.mem_inc_pc(mem_inc_pc),
 .mem_is_zero(mem_is_zero),
 .mem_regwrite(mem_regwrite),
 .mem_memread(mem_memread),
@@ -259,11 +271,13 @@ MEM_WB mem_wb (
 .rst(rst),
 .read_data(mem_data),
 .mem_alu_result(mem_alu_result),
+.mem_inc_pc(mem_inc_pc),
 .mem_regwrite(mem_regwrite),
 .mem_memtoreg(mem_memtoreg),
 .mem_rd(mem_rd),
 .wb_read_data(wb_read_data),
 .wb_alu_result(wb_alu_result),
+.wb_inc_pc(wb_inc_pc),
 .wb_regwrite(wb_regwrite),
 .wb_memtoreg(wb_memtoreg),
 .wb_rd(wb_rd) //update rd
