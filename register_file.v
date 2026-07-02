@@ -21,5 +21,5 @@ rf[rd_addr] <=write_data;
 end
 end
 assign rs1_data = (rs1_addr==5'b0) ? 32'h0: ((rs1_addr==rd_addr)? write_data: rf[rs1_addr]);
-assign rs2_data = (rs2_addr ==5'b0) ? 32'h0: ((rs1_addr ==rd_addr)? write_data: rf[rs2_addr]);
+assign rs2_data = (rs2_addr ==5'b0) ? 32'h0: ((rs2_addr ==rd_addr)? write_data: rf[rs2_addr]);
 endmodule
