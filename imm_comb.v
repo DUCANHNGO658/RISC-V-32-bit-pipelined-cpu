@@ -18,7 +18,7 @@ case (opcode)
 7'b1100011: imm_out ={{20{id_inst[31]}},id_inst[7],id_inst[30:25],id_inst[11:8],1'b0};
 
  // J type: jal 
- 7'b1101111: imm_out = {{12{id_inst[31]}}, id_inst[19], id_inst[20], id_inst[30:21], 1'b0};
+ 7'b1101111: imm_out = {{12{id_inst[31]}}, id_inst[19:12], id_inst[20], id_inst[30:21], 1'b0};
 default: // R type
 imm_out = 32'b0;
 endcase

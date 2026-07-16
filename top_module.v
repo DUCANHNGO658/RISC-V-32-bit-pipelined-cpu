@@ -41,13 +41,14 @@ output wire [WIDTH-1: 0] cur_pc
  wire [WIDTH-1:0] ex_inc_pc,ex_rs1_data, ex_rs2_data, ex_imm;
  wire ex_regwrite, ex_aluSrc, ex_memread, ex_memwrite, ex_branch; 
  wire [1:0] ex_memtoreg;
- wire [2:0] ex_alu_signal;
+ wire [2:0] ex_alu_signal, ex_funct3;
  wire [4:0] ex_rd, ex_rs1_addr, ex_rs2_addr;
  
  wire [WIDTH-1:0] mem_pc_branch, mem_alu_result, mem_rs2_data, mem_inc_pc;
  wire mem_is_zero, mem_regwrite, mem_memread, mem_memwrite, mem_branch;
  wire [1:0] mem_memtoreg;
  wire [4:0] mem_rd;
+ wire [2:0] mem_funct3;
  
  wire [31:0] wb_alu_result, wb_read_data, wb_inc_pc;
  wire [4:0] wb_rd;
@@ -71,7 +72,7 @@ output wire [WIDTH-1: 0] cur_pc
  );   
  
  assign inc_pc = cur_pc +4;   
- assign pc_sel = mem_branch & mem_is_zero;
+ assign pc_sel = mem_branch & ((mem_funct3 ==3'b000) ? mem_is_zero: !mem_is_zero);
 // // pc mux
 // Mux pc_mux (
 // .in1(mem_pc_branch),
@@ -120,7 +121,7 @@ imm_comb imm_c (
 .id_inst(id_inst),
 .imm_out(imm)
 );
-assign pc_branch = ex_inc_pc + ex_imm; //đã chèn 1 bit 0 ở cuối để khỏi phải shift left 2 
+assign pc_branch = (ex_inc_pc -32'd4) + ex_imm; //đã chèn 1 bit 0 ở cuối để khỏi phải shift left 2 
 
 //ALU mux
 Mux alu_mux (
@@ -194,6 +195,7 @@ IF_ID if_id (
 .rst(rst),
 .stall(stall),
 .jump(jump),
+.pc_sel(pc_sel),
 .inc_pc(inc_pc),
 .inst(inst),
 .id_inc_pc(id_inc_pc),
@@ -205,6 +207,7 @@ ID_EX id_ex(
 .clk(clk),
 .rst(rst),
 .stall(stall),
+.pc_sel(pc_sel),
 .id_inc_pc(id_inc_pc),
 .rs1_data(rs1_data),
 .rs2_data(rs2_data),
@@ -215,6 +218,7 @@ ID_EX id_ex(
 .memwrite(memwrite),
 .memtoreg(memtoreg),
 .branch(branch),
+.id_funct3(id_inst[14:12]),
 .alu_signal(alu_signal),
 .id_rd(id_rd),
 .id_rs1_addr(id_inst[19:15]),
@@ -230,6 +234,7 @@ ID_EX id_ex(
 .ex_memtoreg(ex_memtoreg),
 .ex_branch(ex_branch),
 .ex_alu_signal(ex_alu_signal),
+.ex_funct3(funct3),
 .ex_rd(ex_rd),
 .ex_rs1_addr(ex_rs1_addr),
 .ex_rs2_addr(ex_rs2_addr) //update lại rd,rs1,rs2 address
@@ -240,6 +245,7 @@ ID_EX id_ex(
 EX_MEM ex_mem (
 .clk(clk),
 .rst(rst),
+.pc_sel(pc_sel),
 .pc_branch(pc_branch),
 .is_zero(is_zero),
 .alu_result(alu_result),
@@ -251,6 +257,7 @@ EX_MEM ex_mem (
 .ex_memtoreg(ex_memtoreg),
 .ex_branch(ex_branch),
 .ex_rd(ex_rd),
+.ex_funct3(ex_funct3),
 .mem_pc_branch(mem_pc_branch),
 .mem_alu_result(mem_alu_result),
 .mem_rs2_data(mem_rs2_data),
@@ -261,7 +268,8 @@ EX_MEM ex_mem (
 .mem_memwrite(mem_memwrite),
 .mem_memtoreg(mem_memtoreg),
 .mem_branch(mem_branch),
-.mem_rd(mem_rd) //update lại rd
+.mem_rd(mem_rd),
+.mem_funct3(mem_funct3) //update lại rd
 );
 
 
