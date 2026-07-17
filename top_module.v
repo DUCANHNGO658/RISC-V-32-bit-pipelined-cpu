@@ -132,6 +132,8 @@ Mux alu_mux (
 .out(in_final)
 );
 
+assign mem_forward_data = (mem_memtoreg == 2'b10) ? mem_inc_pc : mem_alu_result;
+
 //ALU mux inA
 mux_3to1 muxa (
 .sel(forwardA),
