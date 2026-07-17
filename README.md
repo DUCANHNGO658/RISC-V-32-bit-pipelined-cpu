@@ -1,12 +1,7 @@
 # RISC-V-32-bit-pipelined-cpu
-RISC-V 32-bit Pipelined Processor - Subset RV32I
+## A RISC-V 32-bit Pipelined Processor support subset of RV32I, included 5 stage pipelines, hazard detection and forwarding unit.
 
-- Pipeline registers fixed
-- Updated hazard detect unit ( check lw ) and forwarding unit 
-- Updated immediate calculation based on RISC_V architecture
+# Introduction
 
--2/7/2026
-Fixed the copy paste fault in register file 
-Fixed the logic in hazard detection
-Deleted the aluop in control unit (alu control already hanlded)
-Updated the jal in control unit, top module, pipeline and 
+** RISC-V-32-bit-pipelined-cpu** is a 32-bit pipelined processor implementing a core subset of the RV32I ISA, designed using Verilog HDL, This project serves as a implementation of advanced computer architecture concepts, also demonstrating how a 5-stage pipeline can achiveve high performance while maintaining instruction correctness thorught runtime.
+
