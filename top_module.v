@@ -234,7 +234,7 @@ ID_EX id_ex(
 .ex_memtoreg(ex_memtoreg),
 .ex_branch(ex_branch),
 .ex_alu_signal(ex_alu_signal),
-.ex_funct3(funct3),
+.ex_funct3(ex_funct3),
 .ex_rd(ex_rd),
 .ex_rs1_addr(ex_rs1_addr),
 .ex_rs2_addr(ex_rs2_addr) //update lại rd,rs1,rs2 address
