@@ -49,6 +49,7 @@ output wire [WIDTH-1: 0] cur_pc
  wire [1:0] mem_memtoreg;
  wire [4:0] mem_rd;
  wire [2:0] mem_funct3;
+ wire [31:0] mem_forward_data;
  
  wire [31:0] wb_alu_result, wb_read_data, wb_inc_pc;
  wire [4:0] wb_rd;
@@ -135,7 +136,7 @@ Mux alu_mux (
 mux_3to1 muxa (
 .sel(forwardA),
 .ex_rs_data(ex_rs1_data),
-.mem_alu_result(mem_alu_result),
+.mem_alu_result(mem_forward_data),
 .write_reg(write_reg),
 .out(inA)
 );
@@ -143,7 +144,7 @@ mux_3to1 muxa (
 mux_3to1 muxb (
 .sel(forwardB),
 .ex_rs_data(ex_rs2_data),
-.mem_alu_result(mem_alu_result),
+.mem_alu_result(mem_forward_data),
 .write_reg(write_reg),
 .out(inb)
 );
