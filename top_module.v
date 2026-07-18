@@ -28,7 +28,6 @@ output wire [WIDTH-1: 0] cur_pc
  
  wire [2:0] alu_signal;
  wire is_zero;
- wire overflow;
  wire [WIDTH-1:0] alu_result;
  
  wire [WIDTH-1:0] mem_data;
@@ -166,7 +165,6 @@ ALU alu (
 .inB(in_final),
 .alu_control(ex_alu_signal),
 .is_zero(is_zero),
-.overflow(overflow),
 .alu_result(alu_result)
 );
 

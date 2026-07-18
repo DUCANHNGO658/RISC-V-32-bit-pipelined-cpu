@@ -38,7 +38,7 @@ regwrite =1'b1;
 aluSrc = 1'b1;
 memread =1'b1;
 memwrite =1'b0;
-memtoreg =1'b01;
+memtoreg =2'b01;
 branch =1'b0;
 jump = 1'b0;
 end

@@ -5,7 +5,6 @@ input wire [31:0] inA,
 input wire [31:0] inB,
 input wire [2:0] alu_control,
 output wire is_zero,
-output wire overflow,
 output reg [31:0] alu_result
     );
 always@(*) begin
@@ -22,5 +21,5 @@ default alu_result = 32'h0;
 endcase 
 end
 assign is_zero = (alu_result ==32'd0) ? 1:0;
-assign overflow = alu_result[32];
+
 endmodule
