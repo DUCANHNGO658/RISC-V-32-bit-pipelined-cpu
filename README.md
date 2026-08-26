@@ -1,4 +1,4 @@
-# RISC-V-32-bit-pipelined-cpu
+# RISC-V-32-bit-pipelined-cpu (ON GOING)
 ## A RISC-V 32-bit Pipelined Processor support subset of RV32I, included 5 stage pipelines, hazard detection and forwarding unit.
 
 # Introduction
